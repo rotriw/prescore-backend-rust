@@ -2,7 +2,6 @@ use diesel::{prelude::Insertable, Queryable, RunQueryDsl, Selectable, Selectable
 
 use crate::service::postgres::DBCONN;
 
-
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::prescore::exam)]
 pub struct NewExam {
@@ -31,7 +30,16 @@ pub struct Exam {
     pub diagnostic_score: Option<f64>,
 }
 
-pub fn create_exam(user_id: String, exam_id: String, paper_id: String, subject_name: Option<String>, subject_id: Option<String>, standard_score: Option<f64>, user_score: Option<f64>, diagnostic_score: Option<f64>) -> Option<Exam> {
+pub fn create_exam(
+    user_id: String,
+    exam_id: String,
+    paper_id: String,
+    subject_name: Option<String>,
+    subject_id: Option<String>,
+    standard_score: Option<f64>,
+    user_score: Option<f64>,
+    diagnostic_score: Option<f64>,
+) -> Option<Exam> {
     use crate::schema::prescore::exam;
     let new_exam = NewExam {
         user_id,
@@ -44,6 +52,10 @@ pub fn create_exam(user_id: String, exam_id: String, paper_id: String, subject_n
         diagnostic_score,
     };
     unsafe {
-        return diesel::insert_into(exam::table).values(&new_exam).returning(Exam::as_returning()).get_result(DBCONN.as_mut().unwrap()).ok();
+        return diesel::insert_into(exam::table)
+            .values(&new_exam)
+            .returning(Exam::as_returning())
+            .get_result(DBCONN.as_mut().unwrap())
+            .ok();
     }
 }
