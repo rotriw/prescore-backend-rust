@@ -1,0 +1,13 @@
+[package]
+name = "prescore_be"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4"
+diesel = { version = "2.1.5", features = ["postgres"]}
+postgres = "0.19.7"
+serde_json = "1.0.114"
+yaml-rust = "0.4.5"

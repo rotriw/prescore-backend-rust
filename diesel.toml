@@ -1,0 +1,4 @@
+[print_schema]
+file = "src/schema.rs"  # schema文件路径
+with_docs = true
+schema = "prescore"
