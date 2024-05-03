@@ -1,6 +1,8 @@
 
 // use std::thread;
 
+use serde_json::ser::Formatter;
+
 #[macro_export]
 macro_rules! Json {
     () => {
@@ -12,10 +14,37 @@ macro_rules! Json {
     };
 }
 
+
+pub struct FixedPrecisionFloat;
+
+impl Formatter for FixedPrecisionFloat {
+    fn write_f64<W>(&mut self, writer: &mut W, value: f64) -> std::io::Result<()>
+    where
+        W: ?Sized + std::io::Write,
+    {
+        writer.write_all(format!("{:.2}", value).as_bytes())
+    }
+}
+
+#[macro_export]
+macro_rules! JsonWithFloat {
+    ($($json:tt)+) => {{
+        let data = serde_json::json!({$($json)+});
+        let mut out = vec![];
+        let mut ser = serde_json::ser::Serializer::with_formatter(
+            &mut out, 
+            crate::FixedPrecisionFloat
+        );
+        use serde::Serialize;
+        data.serialize(&mut ser).unwrap();
+        String::from_utf8(out).unwrap()
+    }};
+}
 // Default Values
 const DEFAULT_PORT: u16 = 8060;
 const DEFAULT_DB_SERVER: &'static str = "postgres://localhost:5432/prescore";
 pub const DEFAULT_ZHIXUE_LINK: &'static str = "https://www.zhixue.com/";
+pub const FONTPATH: &'static str = "/System/Library/Fonts";
 
 // require mods.
 include!("./require.rs");
