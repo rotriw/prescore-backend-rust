@@ -1,10 +1,13 @@
 #![allow(non_snake_case)] //i like non-snake-case!!!
 
+use std::thread;
+
 use actix_web::{get, post, services, web, Scope};
-use crate::declare::exam::{ExamNumberUpload, ExamUpload};
+use crate::declare::exam::{ExamNumberUpload, ExamUpload, TokenUpload};
 use crate::handler::ResultHandler;
 use crate::model::exam::{get_class_info_by_exam_id, get_score_info_by_exam_id, predict, upload_exam_by_examupload};
 use crate::model::exam_number::{upload_new_exam_number, NewExamNumber};
+use crate::service::zhixue::upload_datas_by_token;
 
 #[get("/predict/{examId}/{score}")]
 async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
@@ -88,12 +91,23 @@ async fn upload_exam_data(data: web::Json<ExamNumberUpload>) -> ResultHandler<St
     })
 }
 
+#[post("/submit/token")]
+async fn upload_exam_data_by_token(data: web::Json<TokenUpload>) -> ResultHandler<String> {
+    let data = data.into_inner();
+    let _ = upload_datas_by_token(data.token).await;
+    Ok(Json! {
+        "code": 0,
+        "msg": "ok. thanks for upload (high authorize mode supported.)"
+    })
+}
+
 pub fn service() -> Scope {
     let services = services![
         get_predict,
         get_class_info,
         get_score_info,
         upload_score,
+        upload_exam_data_by_token,
         upload_exam_data
     ];
     web::scope("/api/exam")

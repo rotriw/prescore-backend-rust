@@ -15,8 +15,15 @@
 // }
 
 use std::collections::HashMap;
+use std::future::Future;
+use reqwest::header::HeaderMap;
+use reqwest::Client;
 use serde::Deserialize;
+use crate::declare::exam::ExamUpload;
+use crate::declare::zhixue::{ZhixueExamList, ZhixuePaperCheckSheet, ZhixueReportMain};
+use crate::model::exam::upload_exam_by_examupload;
 use crate::model::exam_number::NewExamNumber;
+use crate::DEFAULT_ZHIXUE_LINK;
 
 #[derive(Deserialize)]
 pub struct ZhixueExamNumber {
@@ -36,6 +43,66 @@ pub struct ZhixueExamResponse {
 // pub fn login(username: String, password: String) -> Result<String> { // only use in get token for data
 
 // }
+
+pub async fn upload_paper_data_future(client: Client, paper_id: String, exam_id: String, subject_id: String, subject_name: String) -> Result<(), reqwest::Error> {
+    let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/checksheet/?examId={exam_id}&paperId={paper_id}")).send().await?;
+    let res = responsed.json::<ZhixuePaperCheckSheet>().await?;
+    match res.error_code {
+        0 => {
+            upload_exam_by_examupload(ExamUpload {
+                exam_id,
+                paper_id,
+                user_id: res.result.clone().unwrap().current_user_id.unwrap(),
+                user_score: res.result.clone().unwrap().score.unwrap(),
+                diagnostic_score: None,
+                standard_score: res.result.clone().unwrap().standard_score.unwrap(),
+                subject_id,
+                subject_name
+            });
+            Ok(())
+        },
+        _ => Ok(())
+    }
+}
+
+pub async fn upload_exam_data_future(client: Client, exam_id: String) -> Result<(), reqwest::Error> {
+    let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/exam/getReportMain?examId={exam_id}")).send().await?;
+    let res = responsed.json::<ZhixueReportMain>().await?;
+    match res.error_code {
+        0 => {
+            for item in res.result.unwrap().paper_list.unwrap() {
+                upload_paper_data_future(client.clone(), item.paper_id.unwrap(), exam_id.clone(), item.subject_code.unwrap(), item.subject_name.unwrap()).await?;
+            }
+            Ok(())
+        },
+        _ => Ok(())
+    }
+}
+
+pub async fn upload_datas_by_token_future(client: Client, token: String) -> Result<(), reqwest::Error> {
+    let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/getPageExamList")).send().await?;
+    let res = responsed.json::<ZhixueExamList>().await?;
+    match res.error_code {
+        0 => {
+            for item in res.result.unwrap().exam_info_list.unwrap() {
+                upload_exam_data_future(client.clone(), item.exam_id.unwrap()).await?;
+            }
+            Ok(())
+        },
+        _ => Ok(())
+    }
+}
+
+pub async fn upload_datas_by_token(token: String) -> Result<(), reqwest::Error> {
+    let mut headers = HeaderMap::new();
+    headers.insert("Xtoken", token.parse().unwrap());
+    let client = reqwest::Client::builder()
+        .cookie_store(true)
+        .default_headers(headers)
+        .build()
+        .unwrap();
+    upload_datas_by_token_future(client, token).await
+}
 
 pub fn get_paper_class_number(paper_id: String) -> Result<Vec<NewExamNumber>, reqwest::Error> {
     let client = reqwest::blocking::Client::builder()

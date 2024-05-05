@@ -20,6 +20,11 @@ pub struct ExamNumberUpload {
     pub data: Vec<ZhixueExamNumber>
 }
 
+#[derive(Deserialize)]
+pub struct TokenUpload {
+    pub token: String
+}
+
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = crate::schema::prescore::exam)]
 pub struct NewExam {

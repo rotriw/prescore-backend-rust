@@ -17,7 +17,7 @@ async fn deperate_image(_req: HttpRequest) -> Result<HttpResponse, Box<dyn Error
     let options = Options::default();
     let ntime = Utc::now().with_timezone(&FixedOffset::east_opt(8 * 3600).unwrap());
     let globals = liquid::object!({
-        "text": "本功能已弃用，请升级至新版本。",
+        "text": "本功能已更新，请升级至最新版本。",
         "time": ntime.format("%Y-%m-%d %H:%M:%S").to_string()
     });
     let mut fontdb = fontdb::Database::new();
