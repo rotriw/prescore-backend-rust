@@ -1,6 +1,6 @@
 #![allow(non_snake_case)] //i like non-snake-case!!!
 
-use std::thread;
+// use std::thread;
 
 use actix_web::{get, post, services, web, Scope};
 use crate::declare::exam::{ExamNumberUpload, ExamUpload, TokenUpload};
@@ -14,7 +14,7 @@ async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
     let (examId, score) = path.into_inner();
     let (predict, version) = predict(examId, score);
     Ok(Json! {
-        "code": 0, 
+        "code": 0,
         "predict": predict, "version": version
     })
 }
@@ -50,7 +50,7 @@ async fn get_class_info(path: web::Path<String>) -> ResultHandler<String> {
 //     let (predict, version) = predict_with_grade(examId, score);
 //     println!("done");
 //     Ok(Json! {
-//         "code": 0, 
+//         "code": 0,
 //         "predict": predict, "version": version
 //     })
 // }
@@ -66,7 +66,7 @@ async fn upload_score(data: web::Json<ExamUpload>) -> ResultHandler<String> {
             match score {
                 0 => "create",
                 1 => "upload",
-                _ => "unknow",
+                _ => "unknown",
             }
         })
     })

@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(dead_code)]
 // use crate::{declare::zhixue::ZhixuePaper, schema::prescore::exam::paper_id};
 
 // pub fn get_user_message_fromzhixue(token: String) -> Result<ZhixueUser, reqwest::Error> {
@@ -6,7 +7,7 @@
 //     let res = client.post(format!("http://zhixue.com/zhixuebao/{}", "123"))
 //         .header("Xtoken", token)
 //         .send()?;
-    
+
 // }
 
 
@@ -15,12 +16,12 @@
 // }
 
 use std::collections::HashMap;
-use std::future::Future;
 use reqwest::header::HeaderMap;
 use reqwest::Client;
 use serde::Deserialize;
 use crate::declare::exam::ExamUpload;
-use crate::declare::zhixue::{ZhixueExamList, ZhixuePaperCheckSheet, ZhixueReportMain};
+use crate::declare::user::CreateUser;
+use crate::declare::zhixue::{ZhixueAccount, ZhixueExamList, ZhixuePaperCheckSheet, ZhixueReportMain};
 use crate::model::exam::upload_exam_by_examupload;
 use crate::model::exam_number::NewExamNumber;
 use crate::DEFAULT_ZHIXUE_LINK;
@@ -79,7 +80,7 @@ pub async fn upload_exam_data_future(client: Client, exam_id: String) -> Result<
     }
 }
 
-pub async fn upload_datas_by_token_future(client: Client, token: String) -> Result<(), reqwest::Error> {
+pub async fn upload_datas_by_token_future(client: Client, _token: String) -> Result<(), reqwest::Error> {
     let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/getPageExamList")).send().await?;
     let res = responsed.json::<ZhixueExamList>().await?;
     match res.error_code {
@@ -117,8 +118,7 @@ pub fn get_paper_class_number(paper_id: String) -> Result<Vec<NewExamNumber>, re
         .send()?;
     println!("{:?}", res.text());
     Ok(Vec::new())
-    // let res = res.json::<ZhixueExamResponse>()?;
-    
+    //
     // match res.result.as_str() {
     //     "success" => {
     //         let res = res.message;
@@ -135,4 +135,31 @@ pub fn get_paper_class_number(paper_id: String) -> Result<Vec<NewExamNumber>, re
     //     },
     //     _ => Ok(Vec::new())
     // }
+}
+
+pub async fn get_user_data(token: String) -> Result<CreateUser, reqwest::Error> {
+    println!("233");
+    let mut headers = HeaderMap::new();
+    headers.insert("cookie", format!("tlsysSessionId={token}").parse().unwrap());
+    let client = reqwest::Client::builder()
+        .cookie_store(true)
+        .default_headers(headers)
+        .build()
+        .unwrap();
+    let res = client.get(format!("{DEFAULT_ZHIXUE_LINK}/container/container/student/account/")).send().await?;
+    let res = res.json::<ZhixueAccount>().await?;
+    println!("ddd");
+    let student = res.student.unwrap();
+    Ok(CreateUser {
+        user_id: Some(student.id.clone()),
+        name: None, // 我真不上传。所以谁保护隐私？
+        login_name: Some(student.login_name),
+        school_id: Some(student.clazz.school.id),
+        school_name: Some(student.clazz.school.name),
+        division_id: Some(student.clazz.division.id),
+        division_name: Some(student.clazz.division.name),
+        class_id: Some(student.clazz.id),
+        class_name: Some(student.clazz.name),
+        child_id: Some(student.id), // 我不是很懂这个和user_id的区别
+    })
 }

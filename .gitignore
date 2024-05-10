@@ -2,6 +2,7 @@
 .env
 config.json
 .vscode
+.idea
 
 # SB .DS_Store
 

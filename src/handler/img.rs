@@ -1,10 +1,10 @@
 #![allow(non_snake_case)] //i like non-snake-case!!!
 
-use actix_web::{get, services, web, HttpRequest, HttpResponse, ResponseError, Scope};
+use actix_web::{get, services, web, HttpRequest, HttpResponse, Scope};
 use resvg::render;
 use tiny_skia::{Transform, Pixmap};
 use usvg::{Options, Tree};
-use std::{error::Error, fs, ops::Deref};
+use std::{error::Error, ops::Deref};
 use chrono::prelude::*;
 
 #[get("/paper/triple/{paperId}")]

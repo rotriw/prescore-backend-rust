@@ -9,9 +9,10 @@ pub async fn main(port: u16) -> std::io::Result<()> {
         .service(handler::paper::service())
         .service(handler::exam::service())
         .service(handler::img::service())
+        .service(handler::token::service())
         .app_data(web::JsonConfig::default().error_handler(|err, _req| {
             error::InternalError::from_response(
-                "", 
+                "",
                 HttpResponse::BadRequest()
                     .content_type("application/json")
                     .body(Json!{"code": -1, "msg": err.to_string()})

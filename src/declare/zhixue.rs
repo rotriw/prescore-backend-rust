@@ -1,19 +1,4 @@
 #![allow(dead_code)]
-pub struct ZhixueUser {
-    pub id: i64,
-    pub user_id: Option<String>,
-    pub name: Option<String>,
-    pub login_name: Option<String>,
-    pub hashed_token: Option<String>,
-    pub school_id: Option<String>,
-    pub school_name: Option<String>,
-    pub division_id: Option<String>,
-    pub division_name: Option<String>,
-    pub class_id: Option<String>,
-    pub class_name: Option<String>,
-    pub child_id: Option<String>,
-}
-
 use serde::{self, Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -253,4 +238,132 @@ pub struct ZhixueExamList {
 
 	#[serde(rename = "result")]
 	pub result: Option<ZhixueExamListResult>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountStruct {
+	#[serde(rename = "cName")]
+	pub c_name: String,
+	#[serde(rename = "eName")]
+	pub e_name: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountEducationalSystem {
+	pub code: String,
+	pub name: String,
+	pub phase: String,
+	pub phases: Vec<ZhixueAccountPhase>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountSchool {
+	#[serde(rename = "areaId")]
+	pub area_id: String,
+	#[serde(rename = "cityId")]
+	pub city_id: String,
+	pub code: String,
+	#[serde(rename = "countryId")]
+	pub country_id: String,
+	#[serde(rename = "districtId")]
+	pub district_id: String,
+	#[serde(rename = "educationalSystem")]
+	pub educational_system: ZhixueAccountEducationalSystem,
+	pub id: String,
+	pub name: String,
+	pub phase: ZhixueAccountPhase,
+	#[serde(rename = "provinceId")]
+	pub province_id: String,
+	#[serde(rename = "schoolType")]
+	pub school_type: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountPhase {
+	pub code: String,
+	pub name: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountGrade {
+	pub code: String,
+	pub name: String,
+	pub phase: ZhixueAccountPhase,
+	pub sort: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountDivision {
+	pub grade: ZhixueAccountGrade,
+	pub id: String,
+	pub name: String,
+	pub phase: ZhixueAccountPhase,
+	pub school: ZhixueAccountSchool,
+	#[serde(rename = "schoolInYear")]
+	pub school_in_year: i64,
+	#[serde(rename = "startYear")]
+	pub start_year: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountCreator {
+	pub gender: String,
+	pub id: String,
+	pub lable: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Clazz {
+	#[serde(rename = "classType")]
+	pub class_type: String,
+	#[serde(rename = "clazzLabel")]
+	pub clazz_label: String,
+	pub code: String,
+	#[serde(rename = "createTime")]
+	pub create_time: i64,
+	pub creator: ZhixueAccountCreator,
+	pub division: ZhixueAccountDivision,
+	pub grade: ZhixueAccountGrade,
+	pub id: String,
+	#[serde(rename = "isGraduated")]
+	pub is_graduated: bool,
+	pub name: String,
+	pub order: i64,
+	#[serde(rename = "orgType")]
+	pub org_type: String,
+	pub school: ZhixueAccountSchool,
+	pub year: i64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccountStudent {
+	pub avatar: String,
+	pub birthday: i64,
+	pub clazz: Clazz,
+	pub code: String,
+	#[serde(rename = "createTime")]
+	pub create_time: i64,
+	pub email: String,
+	pub gender: String,
+	pub id: String,
+	pub im: String,
+	pub lable: String,
+	#[serde(rename = "loginName")]
+	pub login_name: String,
+	pub mobile: String,
+	pub name: String,
+	pub roles: Vec<ZhixueAccountStruct>,
+	#[serde(rename = "studentNo")]
+	pub student_no: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ZhixueAccount {
+	pub student: Option<ZhixueAccountStudent>,
+	pub user_score: i64,
+	#[serde(rename = "user_vipLevel")]
+	pub user_vip_level: i64,
+	pub user_exp: i64,
+	#[serde(rename = "user_vipDays")]
+	pub user_vip_days: i64,
 }
