@@ -44,6 +44,9 @@ pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64
             }
 
         }   
+        if class_value == 0.0 {
+            class_value = DEFAULT_USER; // 忽略错误上传数据。或者明显错误的，同时影响程序运行的错误。
+        }
         if class_id == "magic_class" {
             class_value = 0 as f64;
         }

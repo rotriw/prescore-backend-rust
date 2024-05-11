@@ -101,7 +101,7 @@ pub fn get_class_name_by_class_id(class_id: String) -> Option<String> {
         return Some("未知班级".to_string());
     }
     for item in result {
-        if item.division_name.is_some() && item.class_name.is_some() {
+        if item.division_name.is_some() && item.class_name.is_some() && item.division_name.clone().unwrap().len() != 0 && item.class_name.clone().unwrap().len() != 0  {
             return Some(combine_class_name(item.division_name.unwrap(), item.class_name.unwrap()));
         }
     }

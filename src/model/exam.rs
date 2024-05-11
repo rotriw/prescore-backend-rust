@@ -194,14 +194,16 @@ pub fn get_score_info_by_data_with_num(datas: Vec<Exam>) -> (f64, f64, f64, f64,
         _min = f64::min(_min, user_score);
         _avg += user_score / size as f64;
     }
-    if size % 2 == 1 {
+    if size == 0 {
+        _med = 0.0;
+    } else if size % 2 == 1 {
         adqselect::nth_element(&mut only_score, size / 2, &mut cmp_float);
         _med = only_score[size / 2];
     } else {
         adqselect::nth_element(&mut only_score, size / 2, &mut cmp_float);
-        adqselect::nth_element(&mut only_score, size / 2 + 1, &mut cmp_float);
+        adqselect::nth_element(&mut only_score, size / 2 - 1, &mut cmp_float);
         _med = only_score[size / 2] / 2.0;
-        _med += only_score[size / 2 + 1] / 2.0;
+        _med += only_score[size / 2 - 1] / 2.0;
     }
     (_max, _min, _med, _avg, size)
 }
@@ -230,14 +232,16 @@ pub fn get_score_info_by_data(datas: Vec<Exam>) -> (f64, f64, f64, f64) {
         _min = f64::min(_min, user_score);
         _avg += user_score / size as f64;
     }
-    if size % 2 == 1 {
+    if size == 0 {
+        _med = 0.0;
+    } else if size % 2 == 1 {
         adqselect::nth_element(&mut only_score, size / 2, &mut cmp_float);
         _med = only_score[size / 2];
     } else {
         adqselect::nth_element(&mut only_score, size / 2, &mut cmp_float);
-        adqselect::nth_element(&mut only_score, size / 2 + 1, &mut cmp_float);
+        adqselect::nth_element(&mut only_score, size / 2 - 1, &mut cmp_float);
         _med = only_score[size / 2] / 2.0;
-        _med += only_score[size / 2 + 1] / 2.0;
+        _med += only_score[size / 2 - 1] / 2.0;
     }
     (_max, _min, _med, _avg)
 }

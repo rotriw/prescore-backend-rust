@@ -79,11 +79,13 @@ async fn upload_exam_data(data: web::Json<ExamNumberUpload>) -> ResultHandler<St
     let data = data.into_inner();
     let mut result = vec![];
     for item in data.data {
-        result.push(NewExamNumber {
-            paper_id: data.paper_id.clone(),
-            class_id: item.clazzId,
-            number: item.scanCount,
-        });
+        if item.scanCount > 0 {
+            result.push(NewExamNumber {
+                paper_id: data.paper_id.clone(),
+                class_id: item.clazzId,
+                number: item.scanCount,
+            });
+        }
     }
     upload_new_exam_number(result);
     Ok(Json! {
