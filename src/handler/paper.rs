@@ -12,7 +12,7 @@ async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
     let (predict, version) = paper::predict(paperId, score);
     Ok(Json! {
         "code": 0, 
-        "predict": predict, 
+        "percent": predict, 
         "version": version
     })
 }
