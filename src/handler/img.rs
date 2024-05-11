@@ -21,7 +21,7 @@ async fn deperate_image(_req: HttpRequest) -> Result<HttpResponse, Box<dyn Error
         "time": ntime.format("%Y-%m-%d %H:%M:%S").to_string()
     });
     let mut fontdb = fontdb::Database::new();
-    fontdb.load_fonts_dir(crate::FONTPATH);
+    fontdb.load_fonts_dir(unsafe{let data = crate::FONTPATH.take().unwrap(); crate::FONTPATH = Some(data.clone()); data});
     let mut pixmap = Pixmap::new(1200, 720)
         .ok_or("Pixmap allocation error").unwrap();
     let svg = template.render(&globals)?;

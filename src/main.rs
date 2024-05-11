@@ -44,7 +44,9 @@ macro_rules! JsonWithFloat {
 const DEFAULT_PORT: u16 = 8060;
 const DEFAULT_DB_SERVER: &'static str = "postgres://localhost:5432/prescore";
 pub const DEFAULT_ZHIXUE_LINK: &'static str = "https://www.zhixue.com/";
-pub const FONTPATH: &'static str = "/System/Library/Fonts";
+pub const DEFAULT_FONTPATH: &str = "/System/Library/Fonts";
+
+pub static mut FONTPATH: Option<String> = None;
 
 // require mods.
 include!("./require.rs");
@@ -52,6 +54,9 @@ include!("./require.rs");
 fn main() {
     //load config
     let config = service::config::load("config.json");
+    unsafe { 
+        FONTPATH = Some(String::from(config["fontpath"].as_str().unwrap_or("")));
+    }
     // start service
     service::apply(config["dblink"].as_str().unwrap_or(DEFAULT_DB_SERVER));
     // start handler.
