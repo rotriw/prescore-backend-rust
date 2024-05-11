@@ -6,7 +6,7 @@
         text-anchor="center" 
         font-size="50px" 
         fill="black" 
-        font-family="KaiTi"
+        font-family="LXGW Wenkai"
     >
         {{ text }}
     </text>
@@ -16,7 +16,7 @@
         text-anchor="center" 
         font-size="30px" 
         fill="black" 
-        font-family="KaiTi"
+        font-family="LXGW Wenkai"
     >
         Time: {{ time }}
     </text>
