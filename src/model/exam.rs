@@ -267,6 +267,35 @@ pub struct ClassData {
     pub avg: f64
 }
 
+pub fn get_class_info_by_class_datas(class_list: Vec<String>, class_data: HashMap<String, Vec<Exam>>) -> Vec<ClassData> {
+    let mut sorted_res = vec![];
+    let mut res = vec![];
+    for class_id in class_list {
+        let (max, min, med, avg, count) = get_score_info_by_data_with_num(class_data[&class_id].clone());
+        let class_name_info = get_class_name_by_class_id(class_id.clone()).unwrap_or(("".to_string(), 2147483647, 2147483647));
+        res.push((ClassData {
+            class_name: class_name_info.0,
+            class_id: class_id.clone(),
+            count: count as i64,
+            max,
+            min,
+            med,
+            avg
+        }, class_name_info.1, class_name_info.2));
+    }
+    res.sort_by(|a, b| {
+        if a.1 == b.1 {
+            a.2.cmp(&b.2)
+        } else {
+            a.1.cmp(&b.1)
+        }
+    });
+    for item in res {
+        sorted_res.push(item.0);
+    }
+    sorted_res
+}
+
 pub fn get_class_info_by_exam_id(exam_id: String) -> Vec<ClassData> {
     let datas = get_datas_by_exam_id(exam_id);
     let mut class_data = HashMap::new();
@@ -280,20 +309,7 @@ pub fn get_class_info_by_exam_id(exam_id: String) -> Vec<ClassData> {
             class_data.get_mut(&class_id).unwrap().push(item);
         }
     }
-    let mut res = vec![];
-    for class_id in class_list {
-        let (max, min, med, avg, count) = get_score_info_by_data_with_num(class_data[&class_id].clone());
-        res.push(ClassData {
-            class_name: get_class_name_by_class_id(class_id.clone()).unwrap_or("".to_string()),
-            class_id: class_id.clone(),
-            count: count as i64,
-            max,
-            min,
-            med,
-            avg
-        });
-    }
-    res
+    get_class_info_by_class_datas(class_list, class_data)
 }
 
 pub fn get_class_info_by_paper_id(paper_id: String) -> Vec<ClassData> {
@@ -309,20 +325,7 @@ pub fn get_class_info_by_paper_id(paper_id: String) -> Vec<ClassData> {
             class_data.get_mut(&class_id).unwrap().push(item);
         }
     }
-    let mut res = vec![];
-    for class_id in class_list {
-        let (max, min, med, avg, count) = get_score_info_by_data_with_num(class_data[&class_id].clone());
-        res.push(ClassData {
-            class_name: get_class_name_by_class_id(class_id.clone()).unwrap_or("".to_string()),
-            class_id: class_id.clone(),
-            count: count as i64,
-            max,
-            min,
-            med,
-            avg
-        });
-    }
-    res
+    get_class_info_by_class_datas(class_list, class_data)
 }
 
 pub fn get_datas_by_exam_id(exam_id: String) -> Vec<Exam> {

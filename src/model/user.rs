@@ -21,24 +21,36 @@ pub fn get_user_class_id_by_user_id(user_id: String) -> Option<String> {
 }
 
 // 最会切的一集。但是其中还是有一些问题。期待更聪明的切法。（我是笨蛋）
-pub fn combine_class_name(division_name: String, class_name: String) -> String {
+pub fn combine_class_name(division_name: String, class_name: String) -> (String, u32, u32) {
+    let (mut value_left, mut value_right) = (0 as u32,0 as u32);
     let mut result = "".to_string();
+    let mut flag = false;
     for (i_left, &item) in division_name.as_bytes().iter().enumerate() {
         if item.is_ascii_digit() {
-            result += &division_name[i_left..];
-            break;
+            if flag == false {
+                flag = true;
+                result += &division_name[i_left..];
+            }
+            value_left *= 10;
+            value_left += item as u32 - '0' as u32;
         }
+        
     }
     if result.len() != 0 {
         result += " ";
     }
+    flag = false;
     for (i_right, &item) in class_name.as_bytes().iter().enumerate() {
         if item.is_ascii_digit() {
-            result += &class_name[i_right..];
-            break;
+            if flag == false {
+                flag = true;
+                result += &class_name[i_right..];
+            }
+            value_right *= 10;
+            value_right += item as u32 - '0' as u32;
         }
     }
-    result
+    (result, value_left, value_right)
 }
 
 pub fn create_user_by_create_user(data: CreateUser) -> Option<()> {
@@ -87,7 +99,7 @@ pub async fn upload_user_by_token(token: String) -> Option<()> { // status
     Some(())
 }
 
-pub fn get_class_name_by_class_id(class_id: String) -> Option<String> {
+pub fn get_class_name_by_class_id(class_id: String) -> Option<(String, u32, u32)> {
     use crate::schema::prescore::user::dsl::user as usr;
     use crate::schema::prescore::user::class_id as cid;
     let mut conn = unsafe {
@@ -98,12 +110,12 @@ pub fn get_class_name_by_class_id(class_id: String) -> Option<String> {
         .ok()?;
     let len = result.len();
     if len == 0 {
-        return Some("未知班级".to_string());
+        return Some(("未知班级".to_string(), 10000000, 100000));
     }
     for item in result {
         if item.division_name.is_some() && item.class_name.is_some() && item.division_name.clone().unwrap().len() != 0 && item.class_name.clone().unwrap().len() != 0  {
             return Some(combine_class_name(item.division_name.unwrap(), item.class_name.unwrap()));
         }
     }
-    return Some("未知班级".to_string());
+    return Some(("未知班级".to_string(), 10000000, 100000));
 }
