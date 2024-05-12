@@ -205,6 +205,9 @@ pub fn get_score_info_by_data_with_num(datas: Vec<Exam>) -> (f64, f64, f64, f64,
         _med = only_score[size / 2] / 2.0;
         _med += only_score[size / 2 - 1] / 2.0;
     }
+    if _min == 2147483647.0 {
+        _min = 0.0;
+    } 
     (_max, _min, _med, _avg, size)
 }
 
@@ -243,6 +246,9 @@ pub fn get_score_info_by_data(datas: Vec<Exam>) -> (f64, f64, f64, f64) {
         _med = only_score[size / 2] / 2.0;
         _med += only_score[size / 2 - 1] / 2.0;
     }
+    if _min == 2147483647.0 {
+        _min = 0.0;
+    } 
     (_max, _min, _med, _avg)
 }
 
