@@ -17,14 +17,14 @@
 
 use std::collections::HashMap;
 use reqwest::header::HeaderMap;
-use reqwest::Client;
 use serde::Deserialize;
+use reqwest::Client;
 use crate::declare::exam::ExamUpload;
 use crate::declare::user::CreateUser;
 use crate::declare::zhixue::{ZhixueAccount, ZhixueExamList, ZhixuePaperCheckSheet, ZhixueReportMain};
 use crate::model::exam::upload_exam_by_examupload;
 use crate::model::exam_number::NewExamNumber;
-use crate::DEFAULT_ZHIXUE_LINK;
+use crate::ZHIXUE_LINK;
 
 #[derive(Deserialize)]
 pub struct ZhixueExamNumber {
@@ -46,7 +46,7 @@ pub struct ZhixueExamResponse {
 // }
 
 pub async fn upload_paper_data_future(client: Client, paper_id: String, exam_id: String, subject_id: String, subject_name: String) -> Result<(), reqwest::Error> {
-    let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/checksheet/?examId={exam_id}&paperId={paper_id}")).send().await?;
+    let responsed = client.get(format!("{}zhixuebao/report/checksheet/?examId={exam_id}&paperId={paper_id}", *ZHIXUE_LINK.get())).send().await?;
     let res = responsed.json::<ZhixuePaperCheckSheet>().await?;
     match res.error_code {
         0 => {
@@ -67,7 +67,7 @@ pub async fn upload_paper_data_future(client: Client, paper_id: String, exam_id:
 }
 
 pub async fn upload_exam_data_future(client: Client, exam_id: String) -> Result<(), reqwest::Error> {
-    let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/exam/getReportMain?examId={exam_id}")).send().await?;
+    let responsed = client.get(format!("{}zhixuebao/report/exam/getReportMain?examId={exam_id}", *ZHIXUE_LINK.get())).send().await?;
     let res = responsed.json::<ZhixueReportMain>().await?;
     match res.error_code {
         0 => {
@@ -81,7 +81,7 @@ pub async fn upload_exam_data_future(client: Client, exam_id: String) -> Result<
 }
 
 pub async fn upload_datas_by_token_future(client: Client, _token: String) -> Result<(), reqwest::Error> {
-    let responsed = client.get(format!("{DEFAULT_ZHIXUE_LINK}zhixuebao/report/getPageExamList")).send().await?;
+    let responsed = client.get(format!("{}zhixuebao/report/getPageExamList", *ZHIXUE_LINK.get())).send().await?;
     let res = responsed.json::<ZhixueExamList>().await?;
     match res.error_code {
         0 => {
@@ -146,7 +146,7 @@ pub async fn get_user_data(token: String) -> Result<CreateUser, reqwest::Error> 
         .default_headers(headers)
         .build()
         .unwrap();
-    let res = client.get(format!("{DEFAULT_ZHIXUE_LINK}/container/container/student/account/")).send().await?;
+    let res = client.get(format!("{}/container/container/student/account/", *ZHIXUE_LINK.get())).send().await?;
     let res = res.json::<ZhixueAccount>().await?;
     println!("ddd");
     let student = res.student.unwrap();

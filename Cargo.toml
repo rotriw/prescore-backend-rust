@@ -19,6 +19,7 @@ resvg = "0.41.0"
 rust_decimal = "1.35.0"
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
+state = "0.6.0"
 tiny-skia = "0.11.4"
 usvg = "0.41.0"
 webp = "0.3.0"

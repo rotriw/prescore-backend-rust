@@ -45,7 +45,7 @@ const DEFAULT_PORT: u16 = 8060;
 const DEFAULT_DB_SERVER: &'static str = "postgres://localhost:5432/prescore";
 pub const DEFAULT_ZHIXUE_LINK: &'static str = "https://www.zhixue.com/";
 pub const DEFAULT_FONTPATH: &str = "/System/Library/Fonts";
-
+pub static ZHIXUE_LINK: state::InitCell<String> = state::InitCell::new();
 pub static mut FONTPATH: Option<String> = None;
 
 // require mods.
@@ -54,6 +54,7 @@ include!("./require.rs");
 fn main() {
     //load config
     let config = service::config::load("config.json");
+    ZHIXUE_LINK.set(String::from(config["zhixue_prefix"].as_str().unwrap_or(DEFAULT_ZHIXUE_LINK)));
     unsafe { 
         FONTPATH = Some(String::from(config["fontpath"].as_str().unwrap_or("")));
     }
