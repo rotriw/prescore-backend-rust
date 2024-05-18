@@ -1,9 +1,55 @@
 use std::collections::HashMap;
-use crate::declare::exam::{ClassDataExam, Exam};
+use crate::declare::{exam::{ClassDataExam, Exam}, paper::PaperDistribute};
 use super::{exam::get_datas_by_paper_id, exam_number::get_exam_number, user::get_user_class_id_by_user_id};
 
-
 const DEFAULT_USER: f64 = 40 as f64;
+
+pub fn get_distribute_with_data(datas: Vec<Exam>, step: f64) -> (Vec<PaperDistribute>, Vec<PaperDistribute>, Vec<PaperDistribute>) {
+    let mut distribute: Vec<PaperDistribute> = vec![];
+    let mut suffix: Vec<PaperDistribute> = vec![];
+    let mut prefix: Vec<PaperDistribute> = vec![];
+    let mut score_list: Vec<f64> = vec![];
+    for data in datas {
+        score_list.push(data.user_score.unwrap_or(0 as f64));    
+    }
+    score_list.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    let mut nscore = 0 as f64;
+    let mut ncnt = 0;
+    for score in score_list {
+        while score > nscore {
+            distribute.push(PaperDistribute {
+                score: nscore,
+                sum: ncnt,
+            });
+            ncnt = 0;
+            nscore += step;
+        }
+        ncnt += 1;
+    }
+    distribute.push(PaperDistribute {
+        score: nscore,
+        sum: ncnt,
+    });
+    let mut cnt = 0;
+    for data in distribute.clone() {
+        cnt += data.sum;
+        suffix.push(PaperDistribute {
+            score: data.score,
+            sum: cnt,
+        });
+    } 
+    let mut cnt = 0;
+    for data in distribute.iter().rev() {
+        cnt += data.sum;
+        prefix.push(PaperDistribute {
+            score: data.score,
+            sum: cnt,
+        });
+    }
+    (distribute, prefix, suffix)
+
+}
+
 
 pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64, i32) {
     let mut res:f64 = 0 as f64;
@@ -90,4 +136,10 @@ pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64
 pub fn predict(paper_id: String, score: f64) -> (f64, i32) {
     let datas = get_datas_by_paper_id(paper_id.clone());
     predict_with_data(datas, paper_id, score)
+}
+
+
+pub fn get_distribute(paper_id: String, step: f64) -> (Vec<PaperDistribute>, Vec<PaperDistribute>, Vec<PaperDistribute>) {
+    let datas = get_datas_by_paper_id(paper_id.clone());
+    get_distribute_with_data(datas, step)
 }

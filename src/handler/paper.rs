@@ -32,6 +32,26 @@ async fn get_score_info(path: web::Path<String>) -> ResultHandler<String> {
     })
 }
 
+#[get("/distribute/{paperId}/{step}")]
+async fn get_distribute(path: web::Path<(String, f64)>) -> ResultHandler<String> {
+    let (paperId, step) = path.into_inner();
+    if step < 0.1 || step > 150.0 {
+        return Ok(Json!{
+            "code": -1,
+            "msg": "Not allowed range."
+        });
+    }
+    let (distribute, suffix, prefix) = paper::get_distribute(paperId, step);
+    Ok(Json!{
+        "code": 0,
+        "data": {
+            "distribute": distribute,
+            "suffix": suffix,
+            "prefix": prefix 
+        }
+    })
+}
+
 #[get("/class_info/{paperId}")]
 async fn get_class_info(path: web::Path<String>) -> ResultHandler<String> {
     let paperId = path.into_inner();
@@ -46,7 +66,8 @@ pub fn service() -> Scope {
     let services = services![
         get_predict,
         get_score_info,
-        get_class_info
+        get_class_info,
+        get_distribute
     ];
     web::scope("/api/paper")
         .service(services)
