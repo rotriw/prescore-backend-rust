@@ -38,6 +38,13 @@ pub struct NewExam {
     pub diagnostic_score: Option<f64>,
 }
 
+#[derive(Insertable, AsChangeset, Clone)]
+#[diesel(table_name = crate::schema::prescore::times_number)]
+pub struct NewTime {
+    pub tid : i64,
+    pub time: i64,
+}
+
 #[derive(Debug, Queryable, Selectable, Clone)]
 #[diesel(table_name = crate::schema::prescore::exam)]
 #[diesel(check_for_backend(diesel::pg::Pg))]

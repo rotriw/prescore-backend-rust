@@ -19,7 +19,7 @@ pub async fn main(port: u16) -> std::io::Result<()> {
             ).into()
         }))
     })
-    .bind(("127.0.0.1", port))?
+    .bind(("0.0.0.0", port))?
     .run()
     .await
 }

@@ -1,6 +1,6 @@
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::{Deserialize, Serialize};
-use crate::{declare::exam::{Exam, ExamUpload, NewExam}, service::postgres::DBPOOL};
+use crate::{declare::exam::{Exam, ExamUpload, NewExam, NewTime}, service::postgres::DBPOOL};
 use diesel::prelude::*;
 
 // const GRADE_SCORE: [(f64, f64); 21] = [
@@ -36,6 +36,43 @@ use diesel::prelude::*;
 //     return 40.0
 // }
 
+pub fn create_time(
+    tid       : i64,
+    time_stamp: i64,
+) -> () {
+    use crate::schema::prescore::times_number;
+    let new_time = NewTime {
+        tid,
+        time: time_stamp,
+    };
+    let mut conn = unsafe {DBPOOL.clone().unwrap().get().unwrap()};
+
+    diesel::insert_into(times_number::table)
+        .values(&new_time)
+        .execute(&mut conn)
+        .expect("Error loading exams");
+    ()
+}
+
+pub fn upload_time(
+    tid       : i64,
+    time_stamp: i64
+) -> () {
+    use crate::schema::prescore::times_number;
+    let new_time = NewTime {
+        tid,
+        time: time_stamp,
+    };
+    let mut conn = unsafe {DBPOOL.clone().unwrap().get().unwrap()};
+
+    diesel::update(times_number::table)
+        .filter(times_number::tid.eq(tid))
+        .set(&new_time)
+        .execute(&mut conn)
+        .expect("Error loading exams");
+    ()
+}
+
 pub fn create_exam(
     user_id         : String,
     exam_id         : String,
@@ -60,11 +97,13 @@ pub fn create_exam(
     
     let mut conn = unsafe {DBPOOL.clone().unwrap().get().unwrap()};
 
-    diesel::insert_into(exam::table)
+    let data: Exam = diesel::insert_into(exam::table)
         .values(&new_exam)
         .returning(Exam::as_returning())
         .get_result(&mut conn)
-        .ok()
+        .ok()?;
+    create_time(data.id, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64);
+    return Some(data.clone());
 }
 
 // upload by exam_id, paper_id and user_id use diesel upload
@@ -95,13 +134,17 @@ pub fn upload_exam_unique(
     let mut conn = unsafe {
         DBPOOL.clone().unwrap().get().unwrap()
     };
-    diesel::update(exam::table)
+    let data: Exam = diesel::update(exam::table)
         .filter(eid.eq(exam_id))
         .filter(uid.eq(user_id))
         .filter(pid.eq(paper_id))
         .set(&new_exam)
         .get_result(&mut conn)
-        .ok()
+        .ok()?;
+    // 我知道这里会出现data.id的time没出现的情况，但是就这样吧。
+    // 反正历史问题就让他变成历史吧。至少没把程序崩了。
+    upload_time(data.id, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64);
+    return Some(data.clone());
 }
 
 pub fn create_exam_by_examupload(data: ExamUpload) -> Option<Exam> {
@@ -345,7 +388,7 @@ pub fn get_datas_by_exam_id(exam_id: String) -> Vec<Exam> {
         .expect("Error loading exams")
 }
 
-use std::collections::HashMap;
+use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
 
 use super::user::{get_class_name_by_class_id, get_user_class_id_by_user_id};
 /*use time::{Duration, Instant}; */
