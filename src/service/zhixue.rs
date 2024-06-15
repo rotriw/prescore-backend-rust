@@ -137,8 +137,9 @@ pub fn get_paper_class_number(paper_id: String) -> Result<Vec<NewExamNumber>, re
     // }
 }
 
+
+// 好像没调用？不知道是不是这里的问题。
 pub async fn get_user_data(token: String) -> Result<CreateUser, reqwest::Error> {
-    println!("233");
     let mut headers = HeaderMap::new();
     headers.insert("cookie", format!("tlsysSessionId={token}").parse().unwrap());
     let client = reqwest::Client::builder()
@@ -148,7 +149,6 @@ pub async fn get_user_data(token: String) -> Result<CreateUser, reqwest::Error> 
         .unwrap();
     let res = client.get(format!("{}/container/container/student/account/", *ZHIXUE_LINK.get())).send().await?;
     let res = res.json::<ZhixueAccount>().await?;
-    println!("ddd");
     let student = res.student.unwrap();
     Ok(CreateUser {
         user_id: Some(student.id.clone()),

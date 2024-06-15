@@ -1,9 +1,10 @@
 #![allow(non_snake_case)] //i like non-snake-case!!!
 
-use actix_web::{get, services, web, Scope};
+use actix_web::{get, post, services, web, Scope};
 
+use crate::declare::exam::ScoreInfoUpload;
 use crate::handler::ResultHandler;
-use crate::model::exam::{get_class_info_by_paper_id, get_score_info_by_paper_id};
+use crate::model::exam::{get_class_info_by_paper_id, get_class_info_by_paper_ids, get_score_info_by_paper_id, get_score_info_by_paper_ids};
 use crate::model::paper;
 
 #[get("/predict/{paperId}/{score}")]
@@ -62,11 +63,39 @@ async fn get_class_info(path: web::Path<String>) -> ResultHandler<String> {
     })
 }
 
+
+#[post("/score_info")]
+async fn post_score_info(data: web::Json<ScoreInfoUpload>) -> ResultHandler<String> {
+    let data = data.into_inner();
+    let (max, min, med, avg) = get_score_info_by_paper_ids(data.paper_id);
+    Ok(JsonWithFloat! {
+        "code": 0,
+        "data": {
+            "max": max,
+            "min": min,
+            "med": med,
+            "avg": avg
+        }
+    })
+}
+
+#[post("/class_info")]
+async fn post_class_info(data: web::Json<ScoreInfoUpload>) -> ResultHandler<String> {
+    let data = data.into_inner();
+    let res = get_class_info_by_paper_ids(data.paper_id);
+    Ok(JsonWithFloat!{
+        "code": 0,
+        "data": res
+    })
+}
+
 pub fn service() -> Scope {
     let services = services![
         get_predict,
         get_score_info,
         get_class_info,
+        post_score_info,
+        post_class_info,
         get_distribute
     ];
     web::scope("/api/paper")

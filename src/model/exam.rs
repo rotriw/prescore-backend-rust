@@ -199,6 +199,52 @@ pub fn get_datas_by_paper_id(paper_id: String) -> Vec<Exam> {
         .expect("Error loading exams")
 }
 
+
+//NOTICE: The returning value doesn't have paper_id
+pub fn get_datas_by_paper_ids(paper_ids: Vec<String>) -> Vec<Exam> {
+    use crate::schema::prescore::exam;
+    let mut conn = unsafe {
+        DBPOOL.clone().unwrap().get().unwrap()
+    };
+    let mut _res: Vec<Exam> = vec![];
+    let mut user_appear_times: HashMap<String, i32> = HashMap::new();
+    let mut user_total_score: HashMap<String, f64> = HashMap::new();
+    let ntres = paper_ids.len();
+    for paper_id in paper_ids {
+        let data: Vec<Exam> = exam::table
+            .filter(exam::paper_id.eq(paper_id))
+            .load(&mut conn)
+            .expect("Error loading exams");
+        for item in data {
+            if !user_appear_times.contains_key(&item.user_id) {
+                user_appear_times.insert(item.user_id.clone(), 0);
+                user_total_score.insert(item.user_id.clone(), 0.0);
+            }
+            if user_appear_times.contains_key(&item.user_id) {
+                (*user_appear_times.get_mut(&item.user_id).unwrap()) += 1;
+                (*user_total_score.get_mut(&item.user_id).unwrap()) += item.user_score.unwrap_or(0.0);
+            }
+        }
+    }
+    for (key, value) in user_total_score {
+        if user_appear_times[&key] < ntres as i32 {
+            continue;
+        }
+        _res.push(Exam {
+            id: 0,
+            user_id: key,
+            exam_id: "".to_string(),
+            paper_id: "".to_string(),
+            subject_name: None,
+            subject_id: None,
+            standard_score: None,
+            user_score: Some(value),
+            diagnostic_score: None
+        });
+    }
+    _res
+}
+
 pub fn cmp_float(a: &f64, b: &f64) -> std::cmp::Ordering {
     if a < b {
         std::cmp::Ordering::Less
@@ -295,8 +341,14 @@ pub fn get_score_info_by_data(datas: Vec<Exam>) -> (f64, f64, f64, f64) {
     (_max, _min, _med, _avg)
 }
 
+
 pub fn get_score_info_by_paper_id(paper_id: String) -> (f64, f64, f64, f64) {
     let datas = get_datas_by_paper_id(paper_id);
+    get_score_info_by_data(datas)
+}
+
+pub fn get_score_info_by_paper_ids(paper_ids: Vec<String>) -> (f64, f64, f64, f64) {
+    let datas = get_datas_by_paper_ids(paper_ids);
     get_score_info_by_data(datas)
 }
 
@@ -363,6 +415,22 @@ pub fn get_class_info_by_exam_id(exam_id: String) -> Vec<ClassData> {
 
 pub fn get_class_info_by_paper_id(paper_id: String) -> Vec<ClassData> {
     let datas = get_datas_by_paper_id(paper_id);
+    let mut class_data = HashMap::new();
+    let mut class_list = vec![];
+    for item in datas {
+        let class_id = get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
+        if !class_data.contains_key(&class_id) {
+            class_data.insert(class_id.clone(), vec![item]);
+            class_list.push(class_id.clone());
+        } else {
+            class_data.get_mut(&class_id).unwrap().push(item);
+        }
+    }
+    get_class_info_by_class_datas(class_list, class_data)
+}
+
+pub fn get_class_info_by_paper_ids(paper_ids: Vec<String>) -> Vec<ClassData> {
+    let datas = get_datas_by_paper_ids(paper_ids);
     let mut class_data = HashMap::new();
     let mut class_list = vec![];
     for item in datas {
