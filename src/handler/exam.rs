@@ -2,12 +2,14 @@
 
 // use std::thread;
 
-use actix_web::{get, post, services, web, Scope};
 use crate::declare::exam::{ExamNumberUpload, ExamUpload, TokenUpload};
 use crate::handler::ResultHandler;
-use crate::model::exam::{get_class_info_by_exam_id, get_score_info_by_exam_id, predict, upload_exam_by_examupload};
+use crate::model::exam::{
+    get_class_info_by_exam_id, get_score_info_by_exam_id, predict, upload_exam_by_examupload,
+};
 use crate::model::exam_number::{upload_new_exam_number, NewExamNumber};
 use crate::service::zhixue::upload_datas_by_token;
+use actix_web::{get, post, services, web, Scope};
 
 #[get("/predict/{examId}/{score}")]
 async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
@@ -15,7 +17,7 @@ async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
     let (predict, version) = predict(examId, score);
     Ok(Json! {
         "code": 0,
-        "percent": predict, 
+        "percent": predict,
         "version": version
     })
 }
@@ -24,7 +26,7 @@ async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
 async fn get_score_info(path: web::Path<String>) -> ResultHandler<String> {
     let examId = path.into_inner();
     let (max, min, med, avg) = get_score_info_by_exam_id(examId);
-    Ok(JsonWithFloat!{
+    Ok(JsonWithFloat! {
         "code": 0,
         "data": {
             "max": max,
@@ -39,7 +41,7 @@ async fn get_score_info(path: web::Path<String>) -> ResultHandler<String> {
 async fn get_class_info(path: web::Path<String>) -> ResultHandler<String> {
     let examId = path.into_inner();
     let res = get_class_info_by_exam_id(examId);
-    Ok(JsonWithFloat!{
+    Ok(JsonWithFloat! {
         "code": 0,
         "data": res
     })
@@ -113,6 +115,5 @@ pub fn service() -> Scope {
         upload_exam_data_by_token,
         upload_exam_data
     ];
-    web::scope("/api/exam")
-        .service(services)
+    web::scope("/api/exam").service(services)
 }

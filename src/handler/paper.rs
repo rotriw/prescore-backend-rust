@@ -65,7 +65,6 @@ async fn get_class_info(path: web::Path<String>) -> ResultHandler<String> {
     })
 }
 
-
 #[post("/score_info")]
 async fn post_score_info(data: web::Json<ScoreInfoUpload>) -> ResultHandler<String> {
     let data = data.into_inner();
@@ -90,7 +89,6 @@ async fn post_class_info(data: web::Json<ScoreInfoUpload>) -> ResultHandler<Stri
         "data": res
     })
 }
-
 
 #[post("/predict/{score}")]
 async fn post_predict_multi(path: web::Path<f64>, data: web::Json<ScoreInfoUpload>) -> ResultHandler<String> {

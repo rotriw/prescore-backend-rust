@@ -1,7 +1,10 @@
+use crate::{
+    declare::exam::{Exam, ExamUpload, NewExam, NewTime},
+    service::postgres::DBPOOL,
+};
+use diesel::prelude::*;
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::{Deserialize, Serialize};
-use crate::{declare::exam::{Exam, ExamUpload, NewExam, NewTime}, service::postgres::DBPOOL};
-use diesel::prelude::*;
 
 // const GRADE_SCORE: [(f64, f64); 21] = [
 //     (0.01, 100.0),
@@ -36,16 +39,13 @@ use diesel::prelude::*;
 //     return 40.0
 // }
 
-pub fn create_time(
-    tid       : i64,
-    time_stamp: i64,
-) -> () {
+pub fn create_time(tid: i64, time_stamp: i64) -> () {
     use crate::schema::prescore::times_number;
     let new_time = NewTime {
         tid,
         time: time_stamp,
     };
-    let mut conn = unsafe {DBPOOL.clone().unwrap().get().unwrap()};
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
 
     diesel::insert_into(times_number::table)
         .values(&new_time)
@@ -54,16 +54,13 @@ pub fn create_time(
     ()
 }
 
-pub fn upload_time(
-    tid       : i64,
-    time_stamp: i64
-) -> () {
+pub fn upload_time(tid: i64, time_stamp: i64) -> () {
     use crate::schema::prescore::times_number;
     let new_time = NewTime {
         tid,
         time: time_stamp,
     };
-    let mut conn = unsafe {DBPOOL.clone().unwrap().get().unwrap()};
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
 
     diesel::update(times_number::table)
         .filter(times_number::tid.eq(tid))
@@ -74,13 +71,13 @@ pub fn upload_time(
 }
 
 pub fn create_exam(
-    user_id         : String,
-    exam_id         : String,
-    paper_id        : String,
-    subject_name    : Option<String>,
-    subject_id      : Option<String>,
-    standard_score  : Option<f64>,
-    user_score      : Option<f64>,
+    user_id: String,
+    exam_id: String,
+    paper_id: String,
+    subject_name: Option<String>,
+    subject_id: Option<String>,
+    standard_score: Option<f64>,
+    user_score: Option<f64>,
     diagnostic_score: Option<f64>,
 ) -> Option<Exam> {
     use crate::schema::prescore::exam;
@@ -94,33 +91,39 @@ pub fn create_exam(
         user_score,
         diagnostic_score,
     };
-    
-    let mut conn = unsafe {DBPOOL.clone().unwrap().get().unwrap()};
+
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
 
     let data: Exam = diesel::insert_into(exam::table)
         .values(&new_exam)
         .returning(Exam::as_returning())
         .get_result(&mut conn)
         .ok()?;
-    create_time(data.id, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64);
+    create_time(
+        data.id,
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
+    );
     return Some(data.clone());
 }
 
 // upload by exam_id, paper_id and user_id use diesel upload
 pub fn upload_exam_unique(
-    user_id         : String,
-    exam_id         : String,
-    paper_id        : String,
-    subject_name    : Option<String>,
-    subject_id      : Option<String>,
-    standard_score  : Option<f64>,
-    user_score      : Option<f64>,
+    user_id: String,
+    exam_id: String,
+    paper_id: String,
+    subject_name: Option<String>,
+    subject_id: Option<String>,
+    standard_score: Option<f64>,
+    user_score: Option<f64>,
     diagnostic_score: Option<f64>,
 ) -> Option<Exam> {
     use crate::schema::prescore::exam;
-    use crate::schema::prescore::exam::{exam_id as eid, user_id as uid, paper_id as pid};
-    
-        // upload by exam_id, paper_id and user_id
+    use crate::schema::prescore::exam::{exam_id as eid, paper_id as pid, user_id as uid};
+
+    // upload by exam_id, paper_id and user_id
     let new_exam = NewExam {
         user_id: user_id.clone(),
         exam_id: exam_id.clone(),
@@ -131,9 +134,7 @@ pub fn upload_exam_unique(
         user_score,
         diagnostic_score,
     };
-    let mut conn = unsafe {
-        DBPOOL.clone().unwrap().get().unwrap()
-    };
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
     let data: Exam = diesel::update(exam::table)
         .filter(eid.eq(exam_id))
         .filter(uid.eq(user_id))
@@ -143,29 +144,35 @@ pub fn upload_exam_unique(
         .ok()?;
     // 我知道这里会出现data.id的time没出现的情况，但是就这样吧。
     // 反正历史问题就让他变成历史吧。至少没把程序崩了。
-    upload_time(data.id, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64);
+    upload_time(
+        data.id,
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
+    );
     return Some(data.clone());
 }
 
 pub fn create_exam_by_examupload(data: ExamUpload) -> Option<Exam> {
     create_exam(
-        data.user_id, 
-        data.exam_id, 
-        data.paper_id, 
-        Some(data.subject_name), 
-        Some(data.subject_id), 
+        data.user_id,
+        data.exam_id,
+        data.paper_id,
+        Some(data.subject_name),
+        Some(data.subject_id),
         Some(data.standard_score),
-        Some(data.user_score), 
-        data.diagnostic_score
+        Some(data.user_score),
+        data.diagnostic_score,
     )
 }
 
-pub fn upload_exam_by_examupload(data: ExamUpload) -> Option<i64> { // status
-    use crate::schema::prescore::exam::{exam_id, user_id, paper_id, dsl::exam};
-    let mut conn = unsafe {
-        DBPOOL.clone().unwrap().get().unwrap()
-    };
-    let res = exam.filter(exam_id.eq(data.exam_id.clone()))
+pub fn upload_exam_by_examupload(data: ExamUpload) -> Option<i64> {
+    // status
+    use crate::schema::prescore::exam::{dsl::exam, exam_id, paper_id, user_id};
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
+    let res = exam
+        .filter(exam_id.eq(data.exam_id.clone()))
         .filter(user_id.eq(data.user_id.clone()))
         .filter(paper_id.eq(data.paper_id.clone()))
         .get_result::<Exam>(&mut conn)
@@ -175,14 +182,14 @@ pub fn upload_exam_by_examupload(data: ExamUpload) -> Option<i64> { // status
         return Some(0);
     } else {
         upload_exam_unique(
-            data.user_id, 
-            data.exam_id, 
-            data.paper_id, 
-            Some(data.subject_name), 
-            Some(data.subject_id), 
+            data.user_id,
+            data.exam_id,
+            data.paper_id,
+            Some(data.subject_name),
+            Some(data.subject_id),
             Some(data.standard_score),
-            Some(data.user_score), 
-            data.diagnostic_score
+            Some(data.user_score),
+            data.diagnostic_score,
         );
         return Some(1);
     }
@@ -190,22 +197,17 @@ pub fn upload_exam_by_examupload(data: ExamUpload) -> Option<i64> { // status
 
 pub fn get_datas_by_paper_id(paper_id: String) -> Vec<Exam> {
     use crate::schema::prescore::exam;
-    let mut conn = unsafe {
-        DBPOOL.clone().unwrap().get().unwrap()
-    };
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
     exam::table
         .filter(exam::paper_id.eq(paper_id))
         .load(&mut conn)
         .expect("Error loading exams")
 }
 
-
 //NOTICE: The returning value doesn't have paper_id
 pub fn get_datas_by_paper_ids(paper_ids: Vec<String>) -> Vec<Exam> {
     use crate::schema::prescore::exam;
-    let mut conn = unsafe {
-        DBPOOL.clone().unwrap().get().unwrap()
-    };
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
     let mut _res: Vec<Exam> = vec![];
     let mut user_appear_times: HashMap<String, i32> = HashMap::new();
     let mut user_total_score: HashMap<String, f64> = HashMap::new();
@@ -222,7 +224,8 @@ pub fn get_datas_by_paper_ids(paper_ids: Vec<String>) -> Vec<Exam> {
             }
             if user_appear_times.contains_key(&item.user_id) {
                 (*user_appear_times.get_mut(&item.user_id).unwrap()) += 1;
-                (*user_total_score.get_mut(&item.user_id).unwrap()) += item.user_score.unwrap_or(0.0);
+                (*user_total_score.get_mut(&item.user_id).unwrap()) +=
+                    item.user_score.unwrap_or(0.0);
             }
         }
     }
@@ -239,7 +242,7 @@ pub fn get_datas_by_paper_ids(paper_ids: Vec<String>) -> Vec<Exam> {
             subject_id: None,
             standard_score: None,
             user_score: Some(value),
-            diagnostic_score: None
+            diagnostic_score: None,
         });
     }
     _res
@@ -296,7 +299,7 @@ pub fn get_score_info_by_data_with_num(datas: Vec<Exam>) -> (f64, f64, f64, f64,
     }
     if _min == 2147483647.0 {
         _min = 0.0;
-    } 
+    }
     (_max, _min, _med, _avg, size)
 }
 
@@ -337,10 +340,9 @@ pub fn get_score_info_by_data(datas: Vec<Exam>) -> (f64, f64, f64, f64) {
     }
     if _min == 2147483647.0 {
         _min = 0.0;
-    } 
+    }
     (_max, _min, _med, _avg)
 }
-
 
 pub fn get_score_info_by_paper_id(paper_id: String) -> (f64, f64, f64, f64) {
     let datas = get_datas_by_paper_id(paper_id);
@@ -365,24 +367,36 @@ pub struct ClassData {
     pub max: f64,
     pub min: f64,
     pub med: f64,
-    pub avg: f64
+    pub avg: f64,
 }
 
-pub fn get_class_info_by_class_datas(class_list: Vec<String>, class_data: HashMap<String, Vec<Exam>>) -> Vec<ClassData> {
+pub fn get_class_info_by_class_datas(
+    class_list: Vec<String>,
+    class_data: HashMap<String, Vec<Exam>>,
+) -> Vec<ClassData> {
     let mut sorted_res = vec![];
     let mut res = vec![];
     for class_id in class_list {
-        let (max, min, med, avg, count) = get_score_info_by_data_with_num(class_data[&class_id].clone());
-        let class_name_info = get_class_name_by_class_id(class_id.clone()).unwrap_or(("".to_string(), 2147483647, 2147483647));
-        res.push((ClassData {
-            class_name: class_name_info.0,
-            class_id: class_id.clone(),
-            count: count as i64,
-            max,
-            min,
-            med,
-            avg
-        }, class_name_info.1, class_name_info.2));
+        let (max, min, med, avg, count) =
+            get_score_info_by_data_with_num(class_data[&class_id].clone());
+        let class_name_info = get_class_name_by_class_id(class_id.clone()).unwrap_or((
+            "".to_string(),
+            2147483647,
+            2147483647,
+        ));
+        res.push((
+            ClassData {
+                class_name: class_name_info.0,
+                class_id: class_id.clone(),
+                count: count as i64,
+                max,
+                min,
+                med,
+                avg,
+            },
+            class_name_info.1,
+            class_name_info.2,
+        ));
     }
     res.sort_by(|a, b| {
         if a.1 == b.1 {
@@ -402,7 +416,8 @@ pub fn get_class_info_by_exam_id(exam_id: String) -> Vec<ClassData> {
     let mut class_data = HashMap::new();
     let mut class_list = vec![];
     for item in datas {
-        let class_id = get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
+        let class_id =
+            get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
         if !class_data.contains_key(&class_id) {
             class_data.insert(class_id.clone(), vec![item]);
             class_list.push(class_id.clone());
@@ -418,7 +433,8 @@ pub fn get_class_info_by_paper_id(paper_id: String) -> Vec<ClassData> {
     let mut class_data = HashMap::new();
     let mut class_list = vec![];
     for item in datas {
-        let class_id = get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
+        let class_id =
+            get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
         if !class_data.contains_key(&class_id) {
             class_data.insert(class_id.clone(), vec![item]);
             class_list.push(class_id.clone());
@@ -434,7 +450,8 @@ pub fn get_class_info_by_paper_ids(paper_ids: Vec<String>) -> Vec<ClassData> {
     let mut class_data = HashMap::new();
     let mut class_list = vec![];
     for item in datas {
-        let class_id = get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
+        let class_id =
+            get_user_class_id_by_user_id(item.user_id.clone()).unwrap_or("magic_class".to_string());
         if !class_data.contains_key(&class_id) {
             class_data.insert(class_id.clone(), vec![item]);
             class_list.push(class_id.clone());
@@ -447,16 +464,17 @@ pub fn get_class_info_by_paper_ids(paper_ids: Vec<String>) -> Vec<ClassData> {
 
 pub fn get_datas_by_exam_id(exam_id: String) -> Vec<Exam> {
     use crate::schema::prescore::exam;
-    let mut conn = unsafe {
-        DBPOOL.clone().unwrap().get().unwrap()
-    };
+    let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
     exam::table
         .filter(exam::exam_id.eq(exam_id))
         .load(&mut conn)
         .expect("Error loading exams")
 }
 
-use std::{collections::HashMap, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    collections::HashMap,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use super::user::{get_class_name_by_class_id, get_user_class_id_by_user_id};
 /*use time::{Duration, Instant}; */

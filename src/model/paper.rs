@@ -1,16 +1,30 @@
+use super::{
+    exam::get_datas_by_paper_id,
+    exam_number::{get_exam_number, ExamNumber},
+    user::get_user_class_id_by_user_id,
+};
+use crate::declare::{
+    exam::{ClassDataExam, Exam},
+    paper::PaperDistribute,
+};
 use std::collections::HashMap;
-use crate::declare::{exam::{ClassDataExam, Exam}, paper::PaperDistribute};
-use super::{exam::get_datas_by_paper_id, exam_number::{get_exam_number, ExamNumber}, user::get_user_class_id_by_user_id};
 
 const DEFAULT_USER: f64 = 40 as f64;
 
-pub fn get_distribute_with_data(datas: Vec<Exam>, step: f64) -> (Vec<PaperDistribute>, Vec<PaperDistribute>, Vec<PaperDistribute>) {
+pub fn get_distribute_with_data(
+    datas: Vec<Exam>,
+    step: f64,
+) -> (
+    Vec<PaperDistribute>,
+    Vec<PaperDistribute>,
+    Vec<PaperDistribute>,
+) {
     let mut distribute: Vec<PaperDistribute> = vec![];
     let mut suffix: Vec<PaperDistribute> = vec![];
     let mut prefix: Vec<PaperDistribute> = vec![];
     let mut score_list: Vec<f64> = vec![];
     for data in datas {
-        score_list.push(data.user_score.unwrap_or(0 as f64));    
+        score_list.push(data.user_score.unwrap_or(0 as f64));
     }
     score_list.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let mut nscore = 0 as f64;
@@ -37,7 +51,7 @@ pub fn get_distribute_with_data(datas: Vec<Exam>, step: f64) -> (Vec<PaperDistri
             score: data.score,
             sum: cnt,
         });
-    } 
+    }
     let mut cnt = 0;
     for data in distribute.iter().rev() {
         cnt += data.sum;
@@ -47,16 +61,19 @@ pub fn get_distribute_with_data(datas: Vec<Exam>, step: f64) -> (Vec<PaperDistri
         });
     }
     (distribute, prefix, suffix)
-
 }
 
-
-pub fn predict_with_data_with_class_number(datas: Vec<Exam>, score: f64, class_number: Vec<ExamNumber>) -> (f64, i32) {
-    let mut res:f64 = 0 as f64;
+pub fn predict_with_data_with_class_number(
+    datas: Vec<Exam>,
+    score: f64,
+    class_number: Vec<ExamNumber>,
+) -> (f64, i32) {
+    let mut res: f64 = 0 as f64;
     let mut data_group: HashMap<String, Vec<ClassDataExam>> = HashMap::new();
     let mut class_ids = vec![];
     for data in datas {
-        let class_id = get_user_class_id_by_user_id(data.user_id.clone()).unwrap_or("magic_class".to_string());
+        let class_id =
+            get_user_class_id_by_user_id(data.user_id.clone()).unwrap_or("magic_class".to_string());
         let class_data = ClassDataExam {
             id: data.id,
             user_id: data.user_id,
@@ -76,19 +93,18 @@ pub fn predict_with_data_with_class_number(datas: Vec<Exam>, score: f64, class_n
             class_ids.push(class_id);
         }
     }
-    
+
     let mut total_user = 0 as f64;
     let mut new_version_flag = false;
     for class_id in class_ids.clone() {
-        let mut class_value = DEFAULT_USER;// class 权重 get from class_number default:40/class
+        let mut class_value = DEFAULT_USER; // class 权重 get from class_number default:40/class
         for class_numberd in class_number.clone() {
             if class_numberd.class_id == class_id {
                 class_value = class_numberd.number as f64;
                 new_version_flag = true;
                 break;
             }
-
-        }   
+        }
         if class_value == 0.0 {
             class_value = DEFAULT_USER; // 忽略错误上传数据。或者明显错误的，同时影响程序运行的错误。
         }
@@ -107,18 +123,17 @@ pub fn predict_with_data_with_class_number(datas: Vec<Exam>, score: f64, class_n
             sum += 1 as f64;
         }
         let avg = count / sum;
-        let mut class_value = DEFAULT_USER;// class 权重 get from class_number default:40/class
+        let mut class_value = DEFAULT_USER; // class 权重 get from class_number default:40/class
         for class_numberd in class_number.clone() {
             if class_numberd.class_id == class_id {
                 class_value = class_numberd.number.clone() as f64;
                 break;
             }
-
         }
         if class_id == "magic_class" {
             class_value = 0 as f64;
         }
-    
+
         res += avg * (class_value / total_user);
     }
     (res, {
@@ -140,8 +155,14 @@ pub fn predict(paper_id: String, score: f64) -> (f64, i32) {
     predict_with_data(datas, paper_id, score)
 }
 
-
-pub fn get_distribute(paper_id: String, step: f64) -> (Vec<PaperDistribute>, Vec<PaperDistribute>, Vec<PaperDistribute>) {
+pub fn get_distribute(
+    paper_id: String,
+    step: f64,
+) -> (
+    Vec<PaperDistribute>,
+    Vec<PaperDistribute>,
+    Vec<PaperDistribute>,
+) {
     let datas = get_datas_by_paper_id(paper_id.clone());
     get_distribute_with_data(datas, step)
 }

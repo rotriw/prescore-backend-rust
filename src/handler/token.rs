@@ -1,12 +1,12 @@
-use actix_web::{post, Scope, services, web};
-use serde::Deserialize;
 use crate::declare::user::CreateUser;
 use crate::handler::ResultHandler;
 use crate::model::user::{upload_user_by_create_user, upload_user_by_token};
+use actix_web::{post, services, web, Scope};
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 struct TokenS {
-    password: String
+    password: String,
 }
 
 /*
@@ -34,10 +34,6 @@ async fn upload_user(data: web::Json<CreateUser>) -> ResultHandler<String> {
 }
 
 pub fn service() -> Scope {
-    let services = services![
-        upload_token,
-        upload_user
-    ];
-    web::scope("/api")
-        .service(services)
+    let services = services![upload_token, upload_user];
+    web::scope("/api").service(services)
 }
