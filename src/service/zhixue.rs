@@ -160,6 +160,6 @@ pub async fn get_user_data(token: String) -> Result<CreateUser, reqwest::Error> 
         division_name: Some(student.clazz.division.name),
         class_id: Some(student.clazz.id),
         class_name: Some(student.clazz.name),
-        child_id: Some(student.id), // 我不是很懂这个和user_id的区别
+        child_id: Some(student.id)
     })
 }

@@ -4,7 +4,7 @@ use actix_web::{get, post, services, web, Scope};
 
 use crate::declare::exam::ScoreInfoUpload;
 use crate::handler::ResultHandler;
-use crate::model::exam::{get_class_info_by_paper_id, get_class_info_by_paper_ids, get_score_info_by_paper_id, get_score_info_by_paper_ids};
+use crate::model::exam::{self, get_class_info_by_paper_id, get_class_info_by_paper_ids, get_score_info_by_paper_id, get_score_info_by_paper_ids};
 use crate::model::paper;
 
 #[get("/predict/{paperId}/{score}")]
@@ -17,6 +17,8 @@ async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
         "version": version
     })
 }
+
+
 
 #[get("/score_info/{paperId}")]
 async fn get_score_info(path: web::Path<String>) -> ResultHandler<String> {
@@ -89,6 +91,19 @@ async fn post_class_info(data: web::Json<ScoreInfoUpload>) -> ResultHandler<Stri
     })
 }
 
+
+#[post("/predict/{score}")]
+async fn post_predict_multi(path: web::Path<f64>, data: web::Json<ScoreInfoUpload>) -> ResultHandler<String> {
+    let score = path.into_inner();
+    let datad = exam::get_datas_by_paper_ids(data.into_inner().paper_id);
+    let (predict, version) = paper::predict_with_data_with_class_number(datad, score, vec![]);
+    Ok(Json! {
+        "code": 0, 
+        "percent": predict, 
+        "version": version
+    })
+}
+
 pub fn service() -> Scope {
     let services = services![
         get_predict,
@@ -96,7 +111,8 @@ pub fn service() -> Scope {
         get_class_info,
         post_score_info,
         post_class_info,
-        get_distribute
+        post_predict_multi,
+        get_distribute,
     ];
     web::scope("/api/paper")
         .service(services)

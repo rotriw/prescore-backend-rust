@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::declare::{exam::{ClassDataExam, Exam}, paper::PaperDistribute};
-use super::{exam::get_datas_by_paper_id, exam_number::get_exam_number, user::get_user_class_id_by_user_id};
+use super::{exam::get_datas_by_paper_id, exam_number::{get_exam_number, ExamNumber}, user::get_user_class_id_by_user_id};
 
 const DEFAULT_USER: f64 = 40 as f64;
 
@@ -51,9 +51,8 @@ pub fn get_distribute_with_data(datas: Vec<Exam>, step: f64) -> (Vec<PaperDistri
 }
 
 
-pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64, i32) {
+pub fn predict_with_data_with_class_number(datas: Vec<Exam>, score: f64, class_number: Vec<ExamNumber>) -> (f64, i32) {
     let mut res:f64 = 0 as f64;
-    let class_number = get_exam_number(paper_id.clone());
     let mut data_group: HashMap<String, Vec<ClassDataExam>> = HashMap::new();
     let mut class_ids = vec![];
     for data in datas {
@@ -122,8 +121,6 @@ pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64
     
         res += avg * (class_value / total_user);
     }
-
-
     (res, {
         if new_version_flag {
             3
@@ -131,6 +128,11 @@ pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64
             2
         }
     })
+}
+
+pub fn predict_with_data(datas: Vec<Exam>, paper_id: String, score: f64) -> (f64, i32) {
+    let class_number = get_exam_number(paper_id.clone());
+    predict_with_data_with_class_number(datas, score, class_number)
 }
 
 pub fn predict(paper_id: String, score: f64) -> (f64, i32) {
