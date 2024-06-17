@@ -66,7 +66,7 @@ pub fn create_user_by_create_user(data: CreateUser) -> Option<()> {
     Some(())
 }
 
-pub fn upload_user_by_create_user(data: CreateUser) -> Option<()> {
+pub fn upload_user_by_create_user_direct(data: CreateUser) -> Option<()> {
     use crate::schema::prescore::user::dsl::user as usr;
     use crate::schema::prescore::user::user_id as uid;
     let mut conn = unsafe {
@@ -79,14 +79,17 @@ pub fn upload_user_by_create_user(data: CreateUser) -> Option<()> {
     Some(())
 }
 
-pub async fn upload_user_by_token(token: String) -> Option<()> { // status
+/*
+    我突然发现我的神秘命名法撞名字了。
+    这里的createUser是指那个struct。
+    这里会数据库寻找并完成更新。而不是在数据库里更新。
+*/
+pub fn upload_user_by_create_user(data: CreateUser) -> Option<()> {
     use crate::schema::prescore::user::user_id;
     use crate::schema::prescore::user::dsl::user;
     let mut conn = unsafe {
         DBPOOL.clone().unwrap().get().unwrap()
     };
-    let data = get_user_data(token).await.ok()?;
-    println!("{:?}", data.clone());
     let res = user
         .filter(user_id.eq(data.user_id.clone()))
         .get_result::<User>(&mut conn)
@@ -94,9 +97,14 @@ pub async fn upload_user_by_token(token: String) -> Option<()> { // status
     if res.is_none() {
         create_user_by_create_user(data);
     } else {
-        upload_user_by_create_user(data);
+        upload_user_by_create_user_direct(data);
     }
     Some(())
+}
+
+pub async fn upload_user_by_token(token: String) -> Option<()> { // status
+    let data = get_user_data(token).await.ok()?;
+    upload_user_by_create_user(data)
 }
 
 pub fn get_class_name_by_class_id(class_id: String) -> Option<(String, u32, u32)> {

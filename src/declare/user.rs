@@ -1,5 +1,6 @@
 use diesel::{AsChangeset, Insertable, Queryable, Selectable};
-#[derive(Insertable, AsChangeset, Clone, Debug)]
+use serde::Deserialize;
+#[derive(Insertable, AsChangeset, Clone, Debug, Deserialize)]
 #[diesel(table_name = crate::schema::prescore::user)]
 
 pub struct CreateUser {
