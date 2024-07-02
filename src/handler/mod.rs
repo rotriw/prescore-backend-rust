@@ -1,8 +1,7 @@
 use std::error::Error;
+
+use perm_macro::pub_handlers;
 // standard error:
 
 pub type ResultHandler<T> = Result<T, Box<dyn Error>>;
-pub mod exam;
-pub mod img;
-pub mod paper;
-pub mod token;
+pub_handlers!();
