@@ -12,7 +12,6 @@ pub fn pub_handlers(_input: TokenStream) -> TokenStream {
     for entry in fs::read_dir(handlers_path).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
-
         if path.is_file() {
             if let Some(filename) = path.file_stem() {
                 if let Some(module_name) = filename.to_str() {
@@ -20,7 +19,6 @@ pub fn pub_handlers(_input: TokenStream) -> TokenStream {
                         continue;
                     }
                     let mod_ident = syn::Ident::new(module_name, proc_macro2::Span::call_site());
-                    // mod_statements.push_str(&format!("mod {};\n", module_name));
                     service_calls.push(quote!{pub mod #mod_ident;});
                 }
             }
@@ -30,20 +28,16 @@ pub fn pub_handlers(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #(#service_calls)*
     };
-
     TokenStream::from(expanded)
 }
 
 #[proc_macro]
 pub fn generate_services(_input: TokenStream) -> TokenStream {
     let handlers_path = "src/handler";
-    // let mut mod_statements = String::new();
     let mut service_calls = Vec::new();
-
     for entry in fs::read_dir(handlers_path).unwrap() {
         let entry = entry.unwrap();
         let path = entry.path();
-
         if path.is_file() {
             if let Some(filename) = path.file_stem() {
                 if let Some(module_name) = filename.to_str() {
@@ -52,13 +46,11 @@ pub fn generate_services(_input: TokenStream) -> TokenStream {
                     }
                     println!("Build module: {}", module_name);
                     let mod_ident = syn::Ident::new(module_name, proc_macro2::Span::call_site());
-                    // mod_statements.push_str(&format!("mod {};\n", module_name));
                     service_calls.push(quote!{.service(handler::#mod_ident::service())});
                 }
             }
         }
     }
-
     let expanded = quote! {
         HttpServer::new(|| {
             App::new()
@@ -73,7 +65,6 @@ pub fn generate_services(_input: TokenStream) -> TokenStream {
             }))
         })
     };
-
     TokenStream::from(expanded)
 }
 

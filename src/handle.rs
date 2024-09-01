@@ -7,6 +7,8 @@ pub async fn main(port: u16) -> std::io::Result<()> {
     println!("Starting server on port: {}", port);
     
     generate_services!()
+
+            
     .bind(("0.0.0.0", port))?
     .run()
     .await
