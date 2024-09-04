@@ -5,7 +5,7 @@ use actix_web::{get, post, services, web, Scope};
 use crate::declare::exam::ScoreInfoUpload;
 use crate::handler::ResultHandler;
 use crate::model::exam::{self, get_class_info_by_paper_id, get_class_info_by_paper_ids, get_score_info_by_paper_id, get_score_info_by_paper_ids};
-use crate::model::paper;
+use crate::model::{exam_number, paper};
 
 #[get("/predict/{paperId}/{score}")]
 async fn get_predict(path: web::Path<(String, f64)>) -> ResultHandler<String> {
@@ -44,7 +44,11 @@ async fn get_distribute(path: web::Path<(String, f64)>) -> ResultHandler<String>
             "msg": "Not allowed range."
         });
     }
-    let (distribute, suffix, prefix) = paper::get_distribute(paperId, step);
+    let class_number = exam_number::get_exam_number(paperId.clone());
+    let datas = exam::get_datas_by_paper_id(paperId.clone());
+    let (distribute, suffix, prefix) = paper::get_distribute_with_data_class_list(datas, step, class_number);
+    // let (distribute, suffix, prefix) = paper::get_distribute(paperId, step);
+    // let (distribute, suffix, prefix) = paper::get_distribute(paperId, step);
     Ok(Json!{
         "code": 0,
         "data": {

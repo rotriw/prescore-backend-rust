@@ -91,9 +91,7 @@ pub fn create_exam(
         user_score,
         diagnostic_score,
     };
-
     let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
-
     let data: Exam = diesel::insert_into(exam::table)
         .values(&new_exam)
         .returning(Exam::as_returning())
@@ -109,7 +107,6 @@ pub fn create_exam(
     return Some(data.clone());
 }
 
-// upload by exam_id, paper_id and user_id use diesel upload
 pub fn upload_exam_unique(
     user_id: String,
     exam_id: String,
@@ -122,8 +119,6 @@ pub fn upload_exam_unique(
 ) -> Option<Exam> {
     use crate::schema::prescore::exam;
     use crate::schema::prescore::exam::{exam_id as eid, paper_id as pid, user_id as uid};
-
-    // upload by exam_id, paper_id and user_id
     let new_exam = NewExam {
         user_id: user_id.clone(),
         exam_id: exam_id.clone(),
@@ -261,8 +256,9 @@ pub fn cmp_float(a: &f64, b: &f64) -> std::cmp::Ordering {
 /*
 我想了一会这个地方怎么合并。可能写这个代码的人可能精神有问题。所以这里就直接复制了。
 什么时候想到更好的解决方案什么时候改。
+还是用一个更全的。
 */
-pub fn get_score_info_by_data_with_num(datas: Vec<Exam>) -> (f64, f64, f64, f64, usize) {
+pub fn get_score_info_by_data(datas: Vec<Exam>) -> (f64, f64, f64, f64, usize) {
     let mut only_score = vec![];
     let mut _max = 0.0;
     let mut _min = 2147483647.0;
@@ -303,60 +299,22 @@ pub fn get_score_info_by_data_with_num(datas: Vec<Exam>) -> (f64, f64, f64, f64,
     (_max, _min, _med, _avg, size)
 }
 
-pub fn get_score_info_by_data(datas: Vec<Exam>) -> (f64, f64, f64, f64) {
-    let mut only_score = vec![];
-    let mut _max = 0.0;
-    let mut _min = 2147483647.0;
-    let mut _med = 0.0;
-    let mut _avg = 0.0;
-    let mut user_scores = HashMap::new();
-    let mut user_list = vec![];
-    for item in datas {
-        if !user_scores.contains_key(&item.user_id) {
-            user_scores.insert(item.user_id.clone(), item.user_score.unwrap_or(0.0));
-            user_list.push(item.user_id.clone());
-        } else {
-            (*user_scores.get_mut(&item.user_id).unwrap()) += item.user_score.unwrap_or(0.0);
-        }
-    }
-    let size = user_list.len();
-    for item in user_list {
-        let user_score = user_scores[&item];
-        only_score.push(user_score);
-        _max = f64::max(_max, user_score);
-        _min = f64::min(_min, user_score);
-        _avg += user_score / size as f64;
-    }
-    if size == 0 {
-        _med = 0.0;
-    } else if size % 2 == 1 {
-        adqselect::nth_element(&mut only_score, size / 2, &mut cmp_float);
-        _med = only_score[size / 2];
-    } else {
-        adqselect::nth_element(&mut only_score, size / 2, &mut cmp_float);
-        adqselect::nth_element(&mut only_score, size / 2 - 1, &mut cmp_float);
-        _med = only_score[size / 2] / 2.0;
-        _med += only_score[size / 2 - 1] / 2.0;
-    }
-    if _min == 2147483647.0 {
-        _min = 0.0;
-    }
-    (_max, _min, _med, _avg)
-}
-
 pub fn get_score_info_by_paper_id(paper_id: String) -> (f64, f64, f64, f64) {
     let datas = get_datas_by_paper_id(paper_id);
-    get_score_info_by_data(datas)
+    let (max, min, med, avg, _) = get_score_info_by_data(datas); 
+    (max, min, med, avg)
 }
 
 pub fn get_score_info_by_paper_ids(paper_ids: Vec<String>) -> (f64, f64, f64, f64) {
     let datas = get_datas_by_paper_ids(paper_ids);
-    get_score_info_by_data(datas)
+    let (max, min, med, avg, _) = get_score_info_by_data(datas); 
+    (max, min, med, avg)
 }
 
 pub fn get_score_info_by_exam_id(exam_id: String) -> (f64, f64, f64, f64) {
     let datas = get_datas_by_exam_id(exam_id);
-    get_score_info_by_data(datas)
+    let (max, min, med, avg, _) = get_score_info_by_data(datas); 
+    (max, min, med, avg)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -378,7 +336,7 @@ pub fn get_class_info_by_class_datas(
     let mut res = vec![];
     for class_id in class_list {
         let (max, min, med, avg, count) =
-            get_score_info_by_data_with_num(class_data[&class_id].clone());
+            get_score_info_by_data(class_data[&class_id].clone());
         let class_name_info = get_class_name_by_class_id(class_id.clone()).unwrap_or((
             "".to_string(),
             2147483647,

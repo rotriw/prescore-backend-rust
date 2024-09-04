@@ -35,9 +35,17 @@ pub fn pub_handlers(_input: TokenStream) -> TokenStream {
 pub fn generate_services(_input: TokenStream) -> TokenStream {
     let handlers_path = "src/handler";
     let mut service_calls = Vec::new();
-    for entry in fs::read_dir(handlers_path).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
+    let data = fs::read_dir(handlers_path).unwrap();
+    let sorted_entries = {
+        let mut entries: Vec<_> = data
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.path())
+            .filter(|path| path.is_file())
+            .collect();
+        entries.sort_by_key(|path| path.to_str().unwrap().to_owned());
+        entries
+    };
+    for path in sorted_entries {
         if path.is_file() {
             if let Some(filename) = path.file_stem() {
                 if let Some(module_name) = filename.to_str() {

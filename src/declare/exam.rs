@@ -66,6 +66,7 @@ pub struct Exam {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ClassDataExam {
     pub id: i64,
     pub user_id: String,

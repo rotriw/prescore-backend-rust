@@ -17,6 +17,7 @@ pub struct CreateUser {
 }
 
 #[derive(Queryable, Selectable, Debug)]
+#[allow(dead_code)]
 #[diesel(table_name = crate::schema::prescore::user)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
