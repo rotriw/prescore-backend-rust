@@ -6,10 +6,8 @@
 
 分析成绩百分比、提供成绩预测、提供分布数据。
 
-本项目以 AGPL-3.0-later 开源。项目在后端以原样加载。
+项目在后端以原样加载。
 
----
+<br/>
 
-&copy; NPC Station | 2024
-
-&copy; Rotriw Dev
+**Prescore Backend** &copy; Rotriw Dev & NPC Station 2024. Under AGPL-3.0-Later License.
