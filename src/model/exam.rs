@@ -2,8 +2,10 @@ use crate::{
     declare::exam::{Exam, ExamUpload, NewExam, NewTime},
     service::postgres::DBPOOL,
 };
-use diesel::prelude::*;
-use diesel::{RunQueryDsl, SelectableHelper};
+use diesel::{
+    prelude::*,
+    {RunQueryDsl, SelectableHelper}
+};
 use serde::{Deserialize, Serialize};
 
 // const GRADE_SCORE: [(f64, f64); 21] = [
@@ -107,7 +109,7 @@ pub fn create_exam(
     return Some(data.clone());
 }
 
-pub fn upload_exam_unique(
+pub fn upload_exam(
     user_id: String,
     exam_id: String,
     paper_id: String,
@@ -163,20 +165,24 @@ pub fn create_exam_by_examupload(data: ExamUpload) -> Option<Exam> {
 }
 
 pub fn upload_exam_by_examupload(data: ExamUpload) -> Option<i64> {
-    // status
-    use crate::schema::prescore::exam::{dsl::exam, exam_id, paper_id, user_id};
+    use crate::schema::prescore::exam::{self, exam_id, paper_id, user_id};
     let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
-    let res = exam
+    // let res = exam
+    //     .filter(exam_id.eq(data.exam_id.clone()))
+    //     .filter(user_id.eq(data.user_id.clone()))
+    //     .filter(paper_id.eq(data.paper_id.clone()))
+    //     .get_result::<Exam>(&mut conn)
+    //     .ok();
+    let res = exam::table
         .filter(exam_id.eq(data.exam_id.clone()))
         .filter(user_id.eq(data.user_id.clone()))
         .filter(paper_id.eq(data.paper_id.clone()))
-        .get_result::<Exam>(&mut conn)
-        .ok();
-    if res.is_none() {
+        .load::<Exam>(&mut conn);
+    if res.is_err() {
         create_exam_by_examupload(data);
         return Some(0);
     } else {
-        upload_exam_unique(
+        upload_exam(
             data.user_id,
             data.exam_id,
             data.paper_id,
@@ -193,6 +199,7 @@ pub fn upload_exam_by_examupload(data: ExamUpload) -> Option<i64> {
 pub fn get_datas_by_paper_id(paper_id: String) -> Vec<Exam> {
     use crate::schema::prescore::exam;
     let mut conn = unsafe { DBPOOL.clone().unwrap().get().unwrap() };
+    
     exam::table
         .filter(exam::paper_id.eq(paper_id))
         .load(&mut conn)
@@ -219,8 +226,7 @@ pub fn get_datas_by_paper_ids(paper_ids: Vec<String>) -> Vec<Exam> {
             }
             if user_appear_times.contains_key(&item.user_id) {
                 (*user_appear_times.get_mut(&item.user_id).unwrap()) += 1;
-                (*user_total_score.get_mut(&item.user_id).unwrap()) +=
-                    item.user_score.unwrap_or(0.0);
+                (*user_total_score.get_mut(&item.user_id).unwrap()) += item.user_score.unwrap_or(0.0);
             }
         }
     }

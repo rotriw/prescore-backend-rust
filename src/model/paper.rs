@@ -254,6 +254,8 @@ pub fn predict(paper_id: String, score: f64) -> (f64, i32) {
     predict_with_data(datas, paper_id, score)
 }
 
+// deprecated
+#[allow(dead_code)]
 pub fn get_distribute(
     paper_id: String,
     step: f64,
